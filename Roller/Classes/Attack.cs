@@ -26,6 +26,8 @@ namespace Roller.Classes
         //For cases like hit rols of 4+ deal x mortal wounds
         public Damage MortalWounds { get; set; }
         public int MortalWoundTrigger { get; set; }
+        // For cases where normal damage is dealt on top of mortal wounds (e.g fireglaives)
+        public bool MortalWoundsEndAttackSequence { get; set; }
 
         public DamageOutput RollDemDice(Loadout setup)
         {
@@ -43,6 +45,7 @@ namespace Roller.Classes
             double woundChance = (double)(7 - ToWound) / 6;
             double saveChance = (double)(7 - (TargetSaveOn + RendModifier)) / 6;
             double saveFailChance = (double)(1 - saveChance);
+            double hitWithoutMortalWoundChance = (double)(hitChance - ((7 - MortalWoundTrigger) / 6));
 
             // Need max hit for array size initilaisation
             maxHit = (setup.NumberOfAttacks * returnMaxDamage(Damage)) +1;
@@ -52,7 +55,16 @@ namespace Roller.Classes
             // i successful hits
             for (int sucessfulHits = 0; sucessfulHits <= setup.NumberOfAttacks; sucessfulHits++)
             {
-                double chanceOfIHits = Binomial(setup.NumberOfAttacks, sucessfulHits, hitChance);
+                double chanceOfIHits;
+
+                if (MortalWoundsEndAttackSequence)
+                {
+                    chanceOfIHits = Binomial(setup.NumberOfAttacks, sucessfulHits, hitWithoutMortalWoundChance);
+                }
+                else
+                {
+                    chanceOfIHits = Binomial(setup.NumberOfAttacks, sucessfulHits, hitChance);
+                }
 
                 // j successful wounds
                 for (int successfulWounds = 0; successfulWounds <= sucessfulHits; successfulWounds++)
@@ -60,15 +72,15 @@ namespace Roller.Classes
                     double chanceOfJWounds = Binomial(sucessfulHits, successfulWounds, woundChance);
 
                     // k failed saves
-                    for (int successfulSaves = 0; successfulSaves <= successfulWounds; successfulSaves++)
+                    for (int failedSaves = 0; failedSaves <= successfulWounds; failedSaves++)
                     {
-                        double chanceOfKFailedSaves = Binomial(successfulWounds, successfulSaves, saveFailChance);
+                        double chanceOfKFailedSaves = Binomial(successfulWounds, failedSaves, saveFailChance);
                         if (Damage != Damage.Specified)
                         {
                             //loop and add to damage outputs to get each
                             for (int damageCount = 1; damageCount <= returnMaxDamage(Damage); damageCount++)
                             {
-                                int damage = successfulSaves * damageCount;
+                                int damage = failedSaves * damageCount;
                                 damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves) / returnMaxDamage(Damage);
 
                             }
@@ -76,7 +88,7 @@ namespace Roller.Classes
                         else
                         {
                             //no variable damage if specified so just assign to that one
-                            int damage = successfulSaves * SpecifiedDamage;
+                            int damage = failedSaves * SpecifiedDamage;
                             damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves);
                         }
                     }
