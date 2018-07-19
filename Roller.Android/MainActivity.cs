@@ -32,32 +32,47 @@ namespace Roller.Android
                 ToWound = 3,
                 RendModifier = 0,
                 TargetSaveOn = 4,
-                Damage = Damage.Specified,
-                SpecifiedDamage = 2
-
+                Damage = Damage.D6,
+                SpecifiedDamage = 3,
+                MortalWounds =  Damage.D6
             };
 
             List<IRollable> attacks = new List<IRollable> { basic };
 
             var rollz = new Loadout
             {
-                NumberOfAttacks = 1,
+                NumberOfAttacks =1,
                 AttackConfiguration = attacks
             };
 
             var result = await Core.RollDemDice(rollz);
             int tracker = 0;
-            foreach (double d in result.VariableOutputSpread)
+            FindViewById<TextView>(Resource.Id.variableText).Text = "Variable Damage: " + System.Environment.NewLine;
+            foreach (double d in result.StandardVariableDamageSpread)
             {
                 if (d > 0.009)
                 {
-                    FindViewById<TextView>(Resource.Id.locationText).Text +=
+                    FindViewById<TextView>(Resource.Id.variableText).Text +=
                         $"Damage [{tracker}] : {Math.Round(d, 2)}" + System.Environment.NewLine;
                 }
 
                 tracker++;
             }
-           
+
+            FindViewById<TextView>(Resource.Id.variableText).Text += System.Environment.NewLine + "Mortal Damage: " + System.Environment.NewLine;
+            int mtracker = 0;
+
+            foreach (double d in result.MortalWoundSpread)
+            {
+              
+                    FindViewById<TextView>(Resource.Id.variableText).Text +=
+                        $"Damage [{mtracker}] : {Math.Round(d, 2)}" + System.Environment.NewLine;
+                
+
+                mtracker++;
+            }
+
+
 
         }
     }

@@ -2261,8 +2261,8 @@ namespace Roller.Android
 			// aapt resource value: 0x7f080020
 			public const int beginning = 2131230752;
 			
-			// aapt resource value: 0x7f080074
-			public const int blapBtn = 2131230836;
+			// aapt resource value: 0x7f080073
+			public const int blapBtn = 2131230835;
 			
 			// aapt resource value: 0x7f080028
 			public const int bottom = 2131230760;
@@ -2414,12 +2414,6 @@ namespace Roller.Android
 			// aapt resource value: 0x7f080048
 			public const int list_item = 2131230792;
 			
-			// aapt resource value: 0x7f080075
-			public const int locationLabel = 2131230837;
-			
-			// aapt resource value: 0x7f080076
-			public const int locationText = 2131230838;
-			
 			// aapt resource value: 0x7f08009d
 			public const int masked = 2131230877;
 			
@@ -2474,8 +2468,8 @@ namespace Roller.Android
 			// aapt resource value: 0x7f08005d
 			public const int radio = 2131230813;
 			
-			// aapt resource value: 0x7f080073
-			public const int relativeLayout1 = 2131230835;
+			// aapt resource value: 0x7f080074
+			public const int relativeLayout1 = 2131230836;
 			
 			// aapt resource value: 0x7f080035
 			public const int right = 2131230773;
@@ -2500,6 +2494,9 @@ namespace Roller.Android
 			
 			// aapt resource value: 0x7f080050
 			public const int scrollView = 2131230800;
+			
+			// aapt resource value: 0x7f080075
+			public const int scrollView1 = 2131230837;
 			
 			// aapt resource value: 0x7f080040
 			public const int scrollable = 2131230784;
@@ -2644,6 +2641,9 @@ namespace Roller.Android
 			
 			// aapt resource value: 0x7f080018
 			public const int useLogo = 2131230744;
+			
+			// aapt resource value: 0x7f080076
+			public const int variableText = 2131230838;
 			
 			// aapt resource value: 0x7f08000e
 			public const int view_offset_helper = 2131230734;

@@ -23,20 +23,7 @@ namespace Roller
 
             void RollIt(IRollable dice)
             {
-
-                    //ConcurrentBag<double> variableWoundTracker = new ConcurrentBag<double>();
-
-                    //Parallel.For(0, setup.NumberOfAttacks, i =>
-                    //{
-                    //    ConcurrentBag<double> attackTracker = new ConcurrentBag<double>();
-                    //    Parallel.For(0, setup.IterationCount,
-                    //        rollDice => { attackTracker.Add(dice.RollDice()); });
-                    //    variableWoundTracker.Add(attackTracker.Sum() / setup.IterationCount);
-                    //});
-
-                dm.VariableOutputSpread = dice.CalculateDemProbabilities(setup);
-
-                //dm.MortalWounds += dice.DamageOutput();
+               dm = dice.RollDemDice(setup);
             }
         }
     }

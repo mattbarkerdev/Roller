@@ -19,7 +19,23 @@ namespace Roller.Classes
         public ToWoundReRoll WoundReRoll { get; set; }
         public TargetSaveReRoll SaveReRoll { get; set; }
 
-        public double[] CalculateDemProbabilities(Loadout setup)
+        //For cases like hits roll of 6 become d6 hits
+        public HitMultiplier HitMultiplier { get; set; }
+        public int HitMultiplierTrigger { get; set; }
+
+        //For cases like hit rols of 4+ deal x mortal wounds
+        public Damage MortalWounds { get; set; }
+        public int MortalWoundTrigger { get; set; }
+
+        public DamageOutput RollDemDice(Loadout setup)
+        {
+            return new DamageOutput
+            {
+                StandardVariableDamageSpread = CalculateDemStandardWoundProbabilities(setup),
+                MortalWoundSpread = CalculateDemMortalWoundProbabilities(setup)
+            };
+        }
+        internal double[] CalculateDemStandardWoundProbabilities(Loadout setup)
         {
             int maxHit;
          
@@ -34,33 +50,33 @@ namespace Roller.Classes
             var damageProbArray = new double[maxHit];
 
             // i successful hits
-            for (int i = 0; i <= setup.NumberOfAttacks; i++)
+            for (int sucessfulHits = 0; sucessfulHits <= setup.NumberOfAttacks; sucessfulHits++)
             {
-                double chanceOfIHits = Binomial(setup.NumberOfAttacks, i, hitChance);
+                double chanceOfIHits = Binomial(setup.NumberOfAttacks, sucessfulHits, hitChance);
 
                 // j successful wounds
-                for (int j = 0; j <= i; j++)
+                for (int successfulWounds = 0; successfulWounds <= sucessfulHits; successfulWounds++)
                 {
-                    double chanceOfJWounds = Binomial(i, j, woundChance);
+                    double chanceOfJWounds = Binomial(sucessfulHits, successfulWounds, woundChance);
 
                     // k failed saves
-                    for (int k = 0; k <= j; k++)
+                    for (int successfulSaves = 0; successfulSaves <= successfulWounds; successfulSaves++)
                     {
-                        double chanceOfKFailedSaves = Binomial(j, k, saveFailChance);
-                        // TODO Just assuming damage 1 for now since damage types not setup in loadouts yet
+                        double chanceOfKFailedSaves = Binomial(successfulWounds, successfulSaves, saveFailChance);
                         if (Damage != Damage.Specified)
                         {
-                            //loop and add to damage outputs
-                            for (int d = 1; d <= returnMaxDamage(Damage); d++)
+                            //loop and add to damage outputs to get each
+                            for (int damageCount = 1; damageCount <= returnMaxDamage(Damage); damageCount++)
                             {
-                                int damage = k * d;
+                                int damage = successfulSaves * damageCount;
                                 damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves) / returnMaxDamage(Damage);
 
                             }
                         }
                         else
                         {
-                            int damage = k * SpecifiedDamage;
+                            //no variable damage if specified so just assign to that one
+                            int damage = successfulSaves * SpecifiedDamage;
                             damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves);
                         }
                     }
@@ -70,35 +86,22 @@ namespace Roller.Classes
             return damageProbArray;
 
 
-            /*******************************************
-             * LOCAL METHODS
-            *******************************************/
-            // Binomial method for getting the probability of x of a result in n throws
-            // n = numAttempts; k = successes; p = probability
-            // Function is: Prob of k successes in n attempts with probability p = (n!/(k!(n-k)!))*(p^k)*((1-p)^(n-k))
-            double Binomial(int numAttempts, int successes, double probability)
-            {
-                if (numAttempts < successes)
-                    throw (new ArgumentException("Number of successes cannot be greater than the number of attempts"));
-               if(probability < 0 || probability > 1)
-                    throw (new ArgumentOutOfRangeException("Probability must be between 0 and 1 inclusive"));
+        }
+        internal double[] CalculateDemMortalWoundProbabilities(Loadout setup)
+        {
+            int maxHit;
 
-                var result = Factorial(numAttempts) / (Factorial(successes) * Factorial(numAttempts - successes)) * Math.Pow(probability, successes) * Math.Pow(1 - probability, numAttempts - successes);
+            double hitChance = (double)(7 - MortalWoundTrigger) / 6;
 
-                return result;
-            }
+            // Need max hit for array size initilaisation
+            maxHit = (setup.NumberOfAttacks * returnMaxDamage(MortalWounds)) + 1;
 
-            // Factorial method for probability calculations
-            // Needs to be double to support massive output values
-            // Supports up to 170 (i think) - output is ~7.25^306
-            double Factorial(int i)
-            {
-                if (i < 0)
-                    throw (new ArgumentOutOfRangeException("Factorial of negative numbers is not defined"));
-                if (i == 0 || i == 1)
-                    return 1;
-                return i * Factorial(i - 1);
-            }
+            var damageProbArray = new double[maxHit];
+
+
+           
+            return damageProbArray;
+            
         }
 
         internal int returnMaxDamage(Damage damageProfile)
@@ -117,6 +120,37 @@ namespace Roller.Classes
                     return 1;
             }
         }
+     
+        /*******************************************
+         * LOCAL METHODS
+        *******************************************/
+        // Binomial method for getting the probability of x of a result in n throws
+        // n = numAttempts; k = successes; p = probability
+        // Function is: Prob of k successes in n attempts with probability p = (n!/(k!(n-k)!))*(p^k)*((1-p)^(n-k))
+        double Binomial(int numAttempts, int successes, double probability)
+        {
+            if (numAttempts < successes)
+                throw (new ArgumentException("Number of successes cannot be greater than the number of attempts"));
+            if (probability < 0 || probability > 1)
+                throw (new ArgumentOutOfRangeException("Probability must be between 0 and 1 inclusive"));
+
+            var result = Factorial(numAttempts) / (Factorial(successes) * Factorial(numAttempts - successes)) * Math.Pow(probability, successes) * Math.Pow(1 - probability, numAttempts - successes);
+
+            return result;
+        }
+
+        // Factorial method for probability calculations
+        // Needs to be double to support massive output values
+        // Supports up to 170 (i think) - output is ~7.25^306
+        double Factorial(int i)
+        {
+            if (i < 0)
+                throw (new ArgumentOutOfRangeException("Factorial of negative numbers is not defined"));
+            if (i == 0 || i == 1)
+                return 1;
+            return i * Factorial(i - 1);
+        }
+
     }
 
     public class Loadout
@@ -153,5 +187,13 @@ namespace Roller.Classes
         Ones = 1,
         OneAndTwos = 2,
         Fails = 3,
+    }
+
+    public enum HitMultiplier
+    {
+        None = 0,
+        D3 = 1,
+        D6 = 2,
+        Specified = 3,
     }
 }

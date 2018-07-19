@@ -5,33 +5,31 @@
     android:layout_height="match_parent"
     android:minWidth="25px"
     android:minHeight="25px">
+    <Button
+        android:text="BLAP IT"
+        android:id="@+id/blapBtn"
+        android:width="165dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/relativeLayout1"
-        android:background="#545454">
-        <Button
-            android:text="BLAP IT"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/blapBtn"
-            android:layout_marginStart="20dp"
-            android:width="165dp"
-            android:layout_marginLeft="20.5dp" />
+        android:background="#ffffff">
+        <ScrollView
+            android:minWidth="25px"
+            android:minHeight="25px"
+            android:id="@+id/scrollView1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+            <TextView
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/variableText"
+                android:layout_marginStart="20dp"
+                android:layout_marginBottom="10dp" />
+        </ScrollView>
     </RelativeLayout>
-    <TextView
-        android:text="Results"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/locationLabel"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="10dp" />
-    <TextView
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/locationText"
-        android:layout_marginStart="20dp"
-        android:layout_marginBottom="10dp" />
 </LinearLayout>
