@@ -6,7 +6,7 @@ namespace Roller.Classes
 {
     public class DamageOutput
     {
-        public int VariableOutput { get; set; } = 0;
-        public int MortalWounds { get; set; } = 0;
+        public double[] StandardVariableDamageSpread { get; set; }
+        public double[] MortalWoundSpread { get; set; } 
     }
 }
