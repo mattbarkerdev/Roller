@@ -6,6 +6,6 @@ namespace Roller.Classes
 {
     public interface IRollable
     {
-        int RollDice();
+        double[] CalculateDemProbabilities(Loadout setup);
     }
 }

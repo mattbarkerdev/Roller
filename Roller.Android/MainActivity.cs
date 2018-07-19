@@ -32,7 +32,7 @@ namespace Roller.Android
                 ToWound = 3,
                 RendModifier = 0,
                 TargetSaveOn = 4,
-
+                Damage = Damage.D6
                 
             };
 
@@ -40,13 +40,23 @@ namespace Roller.Android
 
             var rollz = new Loadout
             {
-                NumberOfAttacks = 18,
-                AttackConfiguration = attacks,
-                IterationCount = 1
+                NumberOfAttacks = 1,
+                AttackConfiguration = attacks
             };
 
             var result = await Core.RollDemDice(rollz);
-            FindViewById<TextView>(Resource.Id.locationText).Text = result.VariableOutput.ToString();
+            int tracker = 0;
+            foreach (double d in result.VariableOutputSpread)
+            {
+                if (d > 0.009)
+                {
+                    FindViewById<TextView>(Resource.Id.locationText).Text +=
+                        $"Damage [{tracker}] : {Math.Round(d, 2)}" + System.Environment.NewLine;
+                }
+
+                tracker++;
+            }
+           
 
         }
     }
