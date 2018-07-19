@@ -48,16 +48,21 @@ namespace Roller.Classes
                     {
                         double chanceOfKFailedSaves = Binomial(j, k, saveFailChance);
                         // TODO Just assuming damage 1 for now since damage types not setup in loadouts yet
-
-                        for (int d = 1; d <= returnMaxDamage(Damage); d++)
+                        if (Damage != Damage.Specified)
                         {
-                            int damage = k * d;
-                            damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves) / returnMaxDamage(Damage);
+                            //loop and add to damage outputs
+                            for (int d = 1; d <= returnMaxDamage(Damage); d++)
+                            {
+                                int damage = k * d;
+                                damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves) / returnMaxDamage(Damage);
 
+                            }
                         }
-                        //  int damage = k * returnMaxDamage(Damage);
-                        //damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves);
-
+                        else
+                        {
+                            int damage = k * SpecifiedDamage;
+                            damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves);
+                        }
                     }
                 }
             }

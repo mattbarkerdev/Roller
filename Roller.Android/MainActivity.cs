@@ -32,8 +32,9 @@ namespace Roller.Android
                 ToWound = 3,
                 RendModifier = 0,
                 TargetSaveOn = 4,
-                Damage = Damage.D6
-                
+                Damage = Damage.Specified,
+                SpecifiedDamage = 2
+
             };
 
             List<IRollable> attacks = new List<IRollable> { basic };
