@@ -32,7 +32,7 @@ namespace Roller.Android
                 ToWound = 3,
                 RendModifier = 0,
                 TargetSaveOn = 4,
-                Damage = Damage.D6,
+                Damage = Damage.Single,
                 SpecifiedDamage = 3,
                 MortalWounds =  Damage.D6
             };
@@ -41,7 +41,7 @@ namespace Roller.Android
 
             var rollz = new Loadout
             {
-                NumberOfAttacks =1,
+                NumberOfAttacks =10,
                 AttackConfiguration = attacks
             };
 
@@ -50,7 +50,7 @@ namespace Roller.Android
             FindViewById<TextView>(Resource.Id.variableText).Text = "Variable Damage: " + System.Environment.NewLine;
             foreach (double d in result.StandardVariableDamageSpread)
             {
-                if (d > 0.009)
+                if (d > 0.0009)
                 {
                     FindViewById<TextView>(Resource.Id.variableText).Text +=
                         $"Damage [{tracker}] : {Math.Round(d, 2)}" + System.Environment.NewLine;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using DieRoller;
 using Roller.Util;
 
 namespace Roller.Classes
@@ -35,13 +36,31 @@ namespace Roller.Classes
                 MortalWoundSpread = CalculateDemMortalWoundProbabilities(setup)
             };
         }
+
+ 
+
         internal double[] CalculateDemStandardWoundProbabilities(Loadout setup)
         {
             int maxHit;
-         
-            double hitChance = (double)(7 - ToHit) / 6;
-            double woundChance = (double)(7 - ToWound) / 6;
-            double saveChance = (double)(7 - (TargetSaveOn + RendModifier)) / 6;
+
+            var hitProbability = RollBuilder.WithDie(Die.D6)
+                .Targeting(Target.ValueAndAbove(ToHit))
+                .WithReroll(Reroll.Ones)
+                .Build();
+            double hitChance = (double) hitProbability.CalculateProbability();
+
+            var woundProbability = RollBuilder.WithDie(Die.D6)
+                .Targeting(Target.ValueAndAbove(ToWound))
+                .WithReroll(Reroll.None)
+                .Build();
+            hitProbability.CalculateProbability();
+            double woundChance = (double) woundProbability.CalculateProbability();
+
+            var saveProbability = RollBuilder.WithDie(Die.D6)
+                .Targeting(Target.ValueAndAbove(TargetSaveOn))
+                .WithReroll(Reroll.None)
+                .Build();
+            double saveChance = (double)saveProbability.CalculateProbability();
             double saveFailChance = (double)(1 - saveChance);
 
             // Need max hit for array size initilaisation
