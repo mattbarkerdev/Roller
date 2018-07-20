@@ -112,7 +112,7 @@ namespace Roller.Classes
         {
             var hitProbability = RollBuilder.WithDie(Die.D6)
                 .Targeting(Target.ValueAndAbove(MortalWoundTrigger))
-                .WithReroll(returnHitReroll(HitReRoll))
+                .WithReroll(Reroll.None)
                 .Build();
             double hitChance = (double)hitProbability.CalculateProbability();
 
@@ -128,10 +128,10 @@ namespace Roller.Classes
                 if (Damage != Damage.Specified)
                 {
                     //loop and add to damage outputs to get each
-                    for (int damageCount = 1; damageCount <= returnMaxDamage(Damage); damageCount++)
+                    for (int damageCount = 1; damageCount <= returnMaxDamage(MortalWounds); damageCount++)
                     {
                         int damage = sucessfulHits * damageCount;
-                        damageProbArray[damage] += (chanceOfIHits) / returnMaxDamage(Damage);
+                        damageProbArray[damage] += (chanceOfIHits) / returnMaxDamage(MortalWounds);
                     }
                 }
                 else

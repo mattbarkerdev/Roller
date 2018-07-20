@@ -34,7 +34,7 @@ namespace Roller.Android
                 TargetSaveOn = 4,
                 Damage = Damage.Single,
                 SpecifiedDamage = 3,
-                MortalWounds =  Damage.Single,
+                MortalWounds =  Damage.D6,
                 MortalWoundTrigger = 6
             };
 
@@ -42,7 +42,7 @@ namespace Roller.Android
 
             var rollz = new Loadout
             {
-                NumberOfAttacks =10,
+                NumberOfAttacks =1,
                 AttackConfiguration = attacks
             };
 
