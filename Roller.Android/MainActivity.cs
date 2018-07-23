@@ -32,9 +32,10 @@ namespace Roller.Android
                 ToWound = 3,
                 RendModifier = 0,
                 TargetSaveOn = 4,
-                Damage = Damage.D6,
+                Damage = Damage.Single,
                 SpecifiedDamage = 3,
-                MortalWounds =  Damage.D6
+                MortalWounds =  Damage.D6,
+                MortalWoundTrigger = 6
             };
 
             List<IRollable> attacks = new List<IRollable> { basic };
@@ -50,10 +51,11 @@ namespace Roller.Android
             FindViewById<TextView>(Resource.Id.variableText).Text = "Variable Damage: " + System.Environment.NewLine;
             foreach (double d in result.StandardVariableDamageSpread)
             {
+                //only show if more than 1% chance
                 if (d > 0.009)
                 {
                     FindViewById<TextView>(Resource.Id.variableText).Text +=
-                        $"Damage [{tracker}] : {Math.Round(d, 2)}" + System.Environment.NewLine;
+                        $"Damage [{tracker}] : {(Math.Round(d, 2)*100)}%" + System.Environment.NewLine;
                 }
 
                 tracker++;
@@ -64,10 +66,12 @@ namespace Roller.Android
 
             foreach (double d in result.MortalWoundSpread)
             {
-              
+                //only show if more than 1% chance
+                if (d > 0.009)
+                {
                     FindViewById<TextView>(Resource.Id.variableText).Text +=
-                        $"Damage [{mtracker}] : {Math.Round(d, 2)}" + System.Environment.NewLine;
-                
+                        $"Damage [{mtracker}] : {(Math.Round(d, 2) * 100)}%" + System.Environment.NewLine;
+                }
 
                 mtracker++;
             }

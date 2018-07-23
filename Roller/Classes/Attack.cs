@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using DieRoller;
 using Roller.Util;
 
 namespace Roller.Classes
@@ -12,22 +13,27 @@ namespace Roller.Classes
         public int RendModifier { get; set; }
         public int TargetSaveOn { get; set; }
 
-        public Damage Damage { get; set; }
+        public Damage Damage { get; set; } = Damage.Single;
         public int SpecifiedDamage { get; set; }
 
-        public ToHitReRoll HitReRoll { get; set; }
-        public ToWoundReRoll WoundReRoll { get; set; }
-        public TargetSaveReRoll SaveReRoll { get; set; }
-
-        //For cases like hits roll of 6 become d6 hits
-        public HitMultiplier HitMultiplier { get; set; }
-        public int HitMultiplierTrigger { get; set; }
+        public RerollBehaviour HitReRoll { get; set; } = RerollBehaviour.None;
+        public RerollBehaviour WoundReRoll { get; set; } = RerollBehaviour.None;
+        public RerollBehaviour SaveReRoll { get; set; } = RerollBehaviour.None;
 
         //For cases like hit rols of 4+ deal x mortal wounds
         public Damage MortalWounds { get; set; }
         public int MortalWoundTrigger { get; set; }
         // For cases where normal damage is dealt on top of mortal wounds (e.g fireglaives)
         public bool MortalWoundsEndAttackSequence { get; set; }
+
+
+
+        //advanced conditionals
+        //case 1: hits roll of 6 become d6 hits
+        public HitMultiplier HitMultiplier { get; set; } = HitMultiplier.None;
+        public int HitMultiplierTrigger { get; set; }
+
+ 
 
         public DamageOutput RollDemDice(Loadout setup)
         {
@@ -37,18 +43,34 @@ namespace Roller.Classes
                 MortalWoundSpread = CalculateDemMortalWoundProbabilities(setup)
             };
         }
+
+ 
+
         internal double[] CalculateDemStandardWoundProbabilities(Loadout setup)
         {
-            int maxHit;
-         
-            double hitChance = (double)(7 - ToHit) / 6;
-            double woundChance = (double)(7 - ToWound) / 6;
-            double saveChance = (double)(7 - (TargetSaveOn + RendModifier)) / 6;
+            var hitProbability = RollBuilder.WithDie(Die.D6)
+                .Targeting(Target.ValueAndAbove(ToHit))
+                .WithReroll(returnHitReroll(HitReRoll))
+                .Build();
+            double hitChance = (double) hitProbability.CalculateProbability();
+
+            var woundProbability = RollBuilder.WithDie(Die.D6)
+                .Targeting(Target.ValueAndAbove(ToWound))
+                .WithReroll(returnHitReroll(WoundReRoll))
+                .Build();
+            double woundChance = (double) woundProbability.CalculateProbability();
+
+            var saveProbability = RollBuilder.WithDie(Die.D6)
+                .Targeting(Target.ValueAndAbove(TargetSaveOn))
+                .WithReroll(returnHitReroll(SaveReRoll))
+                .Build();
+
+            double saveChance = (double)saveProbability.CalculateProbability();
             double saveFailChance = (double)(1 - saveChance);
             double hitWithoutMortalWoundChance = (double)(hitChance - ((7 - MortalWoundTrigger) / 6));
 
             // Need max hit for array size initilaisation
-            maxHit = (setup.NumberOfAttacks * returnMaxDamage(Damage)) +1;
+            var maxHit = (setup.NumberOfAttacks * returnMaxDamage(Damage)) +1;
 
             var damageProbArray = new double[maxHit];
 
@@ -82,7 +104,6 @@ namespace Roller.Classes
                             {
                                 int damage = failedSaves * damageCount;
                                 damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves) / returnMaxDamage(Damage);
-
                             }
                         }
                         else
@@ -101,17 +122,39 @@ namespace Roller.Classes
         }
         internal double[] CalculateDemMortalWoundProbabilities(Loadout setup)
         {
-            int maxHit;
-
-            double hitChance = (double)(7 - MortalWoundTrigger) / 6;
+            var hitProbability = RollBuilder.WithDie(Die.D6)
+                .Targeting(Target.ValueAndAbove(MortalWoundTrigger))
+                .WithReroll(Reroll.None)
+                .Build();
+            double hitChance = (double)hitProbability.CalculateProbability();
 
             // Need max hit for array size initilaisation
-            maxHit = (setup.NumberOfAttacks * returnMaxDamage(MortalWounds)) + 1;
+            var maxHit = (setup.NumberOfAttacks * returnMaxDamage(MortalWounds)) + 1;
 
             var damageProbArray = new double[maxHit];
 
+            for (int sucessfulHits = 0; sucessfulHits <= setup.NumberOfAttacks; sucessfulHits++)
+            {
+                double chanceOfIHits = Binomial(setup.NumberOfAttacks, sucessfulHits, hitChance);
 
-           
+                if (Damage != Damage.Specified)
+                {
+                    //loop and add to damage outputs to get each
+                    for (int damageCount = 1; damageCount <= returnMaxDamage(MortalWounds); damageCount++)
+                    {
+                        int damage = sucessfulHits * damageCount;
+                        damageProbArray[damage] += (chanceOfIHits) / returnMaxDamage(MortalWounds);
+                    }
+                }
+                else
+                {
+                    //no variable damage if specified so just assign to that one
+                    int damage = sucessfulHits * SpecifiedDamage;
+                    damageProbArray[damage] += chanceOfIHits;
+                }
+            }
+
+
             return damageProbArray;
             
         }
@@ -132,7 +175,21 @@ namespace Roller.Classes
                     return 1;
             }
         }
-     
+
+        internal IRerollBehaviour returnHitReroll(RerollBehaviour toRoll)
+        {
+            switch (toRoll)
+            {
+                case RerollBehaviour.Ones:
+                    return Reroll.Ones;
+                case RerollBehaviour.Fails:
+                    return Reroll.Failures;
+                case RerollBehaviour.None:
+                    return Reroll.None;
+                default:
+                    return Reroll.None;
+            }
+        }
         /*******************************************
          * LOCAL METHODS
         *******************************************/
@@ -179,27 +236,13 @@ namespace Roller.Classes
         Specified = 3,
     }
 
-    public enum ToHitReRoll
+    public enum RerollBehaviour
     {
         None =0,
         Ones = 1,
-        OneAndTwos = 2,
-        Fails = 3,
+        Fails = 2,
     }
-    public enum ToWoundReRoll
-    {
-        None = 0,
-        Ones = 1,
-        OneAndTwos = 2,
-        Fails = 3,
-    }
-    public enum TargetSaveReRoll
-    {
-        None = 0,
-        Ones = 1,
-        OneAndTwos = 2,
-        Fails = 3,
-    }
+
 
     public enum HitMultiplier
     {
