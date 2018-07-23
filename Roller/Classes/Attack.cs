@@ -32,8 +32,9 @@ namespace Roller.Classes
         //case 1: hits roll of 6 become d6 hits
         public HitMultiplier HitMultiplier { get; set; } = HitMultiplier.None;
         public int HitMultiplierTrigger { get; set; }
+        public int SpecifiedHitMultiple { get; set; }
 
- 
+
 
         public DamageOutput RollDemDice(Loadout setup)
         {
@@ -117,9 +118,153 @@ namespace Roller.Classes
             }
 
             return damageProbArray;
-
-
         }
+
+        internal double[] CalculateDemStandardWoundProbabilitiesMk2(Loadout setup)
+        {
+            double[] oneAttackDamageProbArray;
+            double[] damageProbArray;
+
+            oneAttackDamageProbArray = CalculateDemStandardWoundProbabilitiesForOneAttack(setup);
+
+            damageProbArray = MultiplyProbabilityArray(oneAttackDamageProbArray, setup);
+
+            return damageProbArray;
+        }
+
+        internal double[] MultiplyProbabilityArray(double[] oneAttackDamageProbArray, Loadout setup)
+        {
+            double[] damageProbArray;
+
+            damageProbArray = new double[(oneAttackDamageProbArray.Length - 1) * setup.NumberOfAttacks];
+
+            if (setup.NumberOfAttacks == 1)
+            {
+                damageProbArray = oneAttackDamageProbArray;
+            }
+            else
+            {
+                for (int curIteration = 1; curIteration < setup.NumberOfAttacks; curIteration++)
+                {
+                    if (curIteration == 1)
+                    {
+                        damageProbArray = oneAttackDamageProbArray;
+                    }
+
+                    damageProbArray = doMultiply(damageProbArray, oneAttackDamageProbArray);
+                }
+            }
+
+            return damageProbArray;
+        }
+
+        internal double[] doMultiply(double[] array1, double[] array2)
+        {
+            double[] resultArray = new double[(array1.Length - 1) + (array2.Length - 1)];
+
+            for (int i = 0; i < array1.Length; i++)
+            {
+                for (int j = 0; j < array1.Length; j++)
+                {
+                    resultArray[i + j] = array1[i] * array2[j];
+                }
+            }
+
+            return resultArray;
+        }
+
+        internal double[] CalculateDemStandardWoundProbabilitiesForOneAttack(Loadout setup)
+        {
+            var hitProbability = RollBuilder.WithDie(Die.D6)
+                .Targeting(Target.ValueAndAbove(ToHit))
+                .WithReroll(returnHitReroll(HitReRoll))
+                .Build();
+            double hitChance = (double)hitProbability.CalculateProbability();
+
+            var woundProbability = RollBuilder.WithDie(Die.D6)
+                .Targeting(Target.ValueAndAbove(ToWound))
+                .WithReroll(returnHitReroll(WoundReRoll))
+                .Build();
+            double woundChance = (double)woundProbability.CalculateProbability();
+
+            var saveProbability = RollBuilder.WithDie(Die.D6)
+                .Targeting(Target.ValueAndAbove(TargetSaveOn))
+                .WithReroll(returnHitReroll(SaveReRoll))
+                .Build();
+            double saveChance = (double)saveProbability.CalculateProbability();
+
+            double saveFailChance = (double)(1 - saveChance);
+            double hitWithoutMortalWoundChance = (double)(hitChance - ((7 - MortalWoundTrigger) / 6));
+            double hitWithoutHitMultiplierChance = (double)(hitChance - ((7 - HitMultiplierTrigger) / 6));
+
+            // Need max hit for array size initilaisation
+            var maxHit = (returnMaxHitExplosion(HitMultiplier) * returnMaxDamage(Damage)) + 1;
+
+            var damageProbArray = new double[maxHit];
+
+            // Missed hit, so 0 damage
+            damageProbArray[0] = 1 - hitChance;
+
+            // Start from 1 instead of 0 (since we handled 0 above)
+            for (int sucessfulHits = 1; sucessfulHits <= returnMaxHitExplosion(HitMultiplier); sucessfulHits++)
+            {
+                double chanceOfIHits;
+
+                // Mortal wounds done and attack sequence ends
+                if (MortalWoundsEndAttackSequence)
+                {
+                    chanceOfIHits = Binomial(setup.NumberOfAttacks, sucessfulHits, hitWithoutMortalWoundChance);
+                }
+                // All successful hits are multiplied
+                else if (ToHit == HitMultiplierTrigger)
+                {
+                    chanceOfIHits = hitChance / returnMaxHitExplosion(HitMultiplier);
+                }
+                // Only hit rolls of x+ are multiplied
+                else
+                {
+                    if (sucessfulHits == 1)
+                    {
+                        chanceOfIHits = hitWithoutHitMultiplierChance + ((hitChance - hitWithoutHitMultiplierChance) / returnMaxHitExplosion(HitMultiplier)) ;
+                    }
+                    else
+                    {
+                        chanceOfIHits = (hitChance - hitWithoutHitMultiplierChance) / returnMaxHitExplosion(HitMultiplier);
+                    }
+                }
+
+                // j successful wounds
+                for (int successfulWounds = 0; successfulWounds <= sucessfulHits; successfulWounds++)
+                {
+                    double chanceOfJWounds = Binomial(sucessfulHits, successfulWounds, woundChance);
+
+                    // k failed saves
+                    for (int failedSaves = 0; failedSaves <= successfulWounds; failedSaves++)
+                    {
+                        double chanceOfKFailedSaves = Binomial(successfulWounds, failedSaves, saveFailChance);
+                        if (Damage != Damage.Specified)
+                        {
+                            //loop and add to damage outputs to get each
+                            for (int damageCount = 1; damageCount <= returnMaxDamage(Damage); damageCount++)
+                            {
+                                int damage = failedSaves * damageCount;
+                                damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves) / returnMaxDamage(Damage);
+                            }
+                        }
+                        else
+                        {
+                            //no variable damage if specified so just assign to that one
+                            int damage = failedSaves * SpecifiedDamage;
+                            damageProbArray[damage] += (chanceOfIHits * chanceOfJWounds * chanceOfKFailedSaves);
+                        }
+                    }
+                }
+            }
+
+            return damageProbArray;
+        }
+
+
         internal double[] CalculateDemMortalWoundProbabilities(Loadout setup)
         {
             var hitProbability = RollBuilder.WithDie(Die.D6)
@@ -156,7 +301,7 @@ namespace Roller.Classes
 
 
             return damageProbArray;
-            
+
         }
 
         internal int returnMaxDamage(Damage damageProfile)
@@ -171,6 +316,23 @@ namespace Roller.Classes
                     return 6;
                 case Damage.Specified:
                     return SpecifiedDamage;
+                default:
+                    return 1;
+            }
+        }
+
+        internal int returnMaxHitExplosion(HitMultiplier hitMultiplier)
+        {
+            switch (hitMultiplier)
+            {
+                case HitMultiplier.None:
+                    return 1;
+                case HitMultiplier.D3:
+                    return 3;
+                case HitMultiplier.D6:
+                    return 6;
+                case HitMultiplier.Specified:
+                    return SpecifiedHitMultiple;
                 default:
                     return 1;
             }
