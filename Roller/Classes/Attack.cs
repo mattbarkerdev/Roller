@@ -166,7 +166,7 @@ namespace Roller.Classes
             {
                 for (int j = 0; j < array1.Length; j++)
                 {
-                    resultArray[i + j] = array1[i] * array2[j];
+                    resultArray[i + j] += array1[i] * array2[j];
                 }
             }
 
