@@ -62,7 +62,7 @@ namespace Roller.Classes
             double woundChance = (double) woundProbability.CalculateProbability();
 
             var saveProbability = RollBuilder.WithDie(Die.D6)
-                .Targeting(Target.ValueAndAbove(TargetSaveOn))
+                .Targeting(Target.ValueAndAbove(TargetSaveOn + RendModifier))
                 .WithReroll(returnHitReroll(SaveReRoll))
                 .Build();
 

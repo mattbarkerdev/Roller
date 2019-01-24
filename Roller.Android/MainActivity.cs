@@ -29,20 +29,27 @@ namespace Roller.Android
             var basic = new Attack
             {
                 ToHit = 3,
-                ToWound = 3,
-                RendModifier = 0,
+                HitReRoll = RerollBehaviour.Ones,
+                ToWound = 2,
+                RendModifier = 2,
                 TargetSaveOn = 4,
-                Damage = Damage.Single,
-                SpecifiedDamage = 3,
-                MortalWounds =  Damage.D6,
-                MortalWoundTrigger = 6
+
+                HitMultiplier = HitMultiplier.None,
+                HitMultiplierTrigger = 6,
+
+                Damage = Damage.D3,
+                SpecifiedDamage = 6,
+
+                MortalWounds =  Damage.Single,
+                MortalWoundTrigger = 6,
+                MortalWoundsEndAttackSequence = true
             };
 
             List<IRollable> attacks = new List<IRollable> { basic };
 
             var rollz = new Loadout
             {
-                NumberOfAttacks =1,
+                NumberOfAttacks = 5,
                 AttackConfiguration = attacks
             };
 

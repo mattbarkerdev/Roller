@@ -6,7 +6,7 @@
     android:minWidth="25px"
     android:minHeight="25px">
     <Button
-        android:text="BLAP IT"
+        android:text="SMACK IT"
         android:id="@+id/blapBtn"
         android:width="165dp"
         android:layout_width="match_parent"
@@ -24,6 +24,7 @@
             android:layout_height="match_parent"
             android:fillViewport="true">
             <TextView
+                android:textSize="10dp"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
